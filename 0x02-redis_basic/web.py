@@ -20,21 +20,26 @@ def data_cacher(method: Callable) -> Callable:
         '''The wrapper function for caching the output and tracking accesses.
         '''
         # Increment the count of how many times this URL was accessed
-        redis_store.incr(f'count:{url}')
-        
+        count_key = f'count:{url}'
+        result_key = f'result:{url}'
+
+        redis_store.incr(count_key)
+
         # Check if the result for this URL is already cached
-        cached_result = redis_store.get(f'result:{url}')
+        cached_result = redis_store.get(result_key)
         if cached_result:
+            print(f"Cached content for {url} found.")
             return cached_result.decode('utf-8')
-        
+
         # If not cached, fetch the content from the URL
+        print(f"Fetching content from {url}.")
         result = method(url)
-        
+
         # Cache the result for 10 seconds
-        redis_store.setex(f'result:{url}', 10, result)
-        
+        redis_store.setex(result_key, 10, result)
+
         return result
-    
+
     return invoker
 
 
